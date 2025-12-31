@@ -1,45 +1,41 @@
 import io
-import os
-from http import HTTPStatus
-
 import soundfile as sf
-from fastapi import APIRouter, Request, HTTPException
+from typing import Annotated
+from http import HTTPStatus
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
 from fish_speech.utils.schema import ServeTTSRequest
-from tools.server.fastapi_utils import (
+from fish_speech.api.config import settings
+from fish_speech.api.deps import get_model_manager
+from fish_speech.api.utils import (
     buffer_to_async_generator,
     get_content_type,
     inference_async,
 )
-from tools.server.inference import inference_wrapper as inference
-from tools.server.model_manager import ModelManager
+from fish_speech.inference_engine.inference_wrapper import inference_wrapper as inference
+from fish_speech.inference_engine.manager import ModelManager
 
 router = APIRouter()
 
-@router.get("/v1/health")
-@router.post("/v1/health")
-async def health():
-    return {"status": "ok"}
-
 @router.post("/v2/tts")
-async def tts(req: ServeTTSRequest, request: Request):
+async def tts(
+    req: ServeTTSRequest, 
+    model_manager: Annotated[ModelManager, Depends(get_model_manager)]
+):
     """
     Generate speech from text using TTS model.
     """
     try:
-        # Get the model from the app
-        app_state = request.app.state
-        model_manager: ModelManager = app_state.model_manager
         engine = model_manager.tts_inference_engine
         sample_rate = engine.decoder_model.sample_rate
 
         # Check if the text is too long
-        if hasattr(app_state, "max_text_length") and app_state.max_text_length > 0 and len(req.text) > app_state.max_text_length:
+        if settings.max_text_length > 0 and len(req.text) > settings.max_text_length:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
-                detail=f"Text is too long, max length is {app_state.max_text_length}",
+                detail=f"Text is too long, max length is {settings.max_text_length}",
             )
 
         # Check if streaming is enabled

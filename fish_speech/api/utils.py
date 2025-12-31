@@ -4,7 +4,7 @@ from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse, Response
 from loguru import logger
 from fish_speech.utils.schema import ServeTTSRequest
-from tools.server.inference import inference_wrapper as inference
+from fish_speech.inference_engine.inference_wrapper import inference_wrapper as inference
 
 async def inference_async(req: ServeTTSRequest, engine):
     for chunk in inference(req, engine):

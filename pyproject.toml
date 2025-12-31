@@ -39,6 +39,7 @@ dependencies = [
   "fastapi>=0.116.1",
   "python-multipart>=0.0.20",
   "soundfile>=0.13.1",
+  "pydantic-settings",
 ]
 
 [project.optional-dependencies]

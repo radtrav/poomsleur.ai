@@ -91,11 +91,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        python3-pip \
-        python3-dev \
-        git \
-        ca-certificates \
-        curl \
+    python3-pip \
+    python3-dev \
+    git \
+    ca-certificates \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -111,9 +111,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        git \
-        ca-certificates \
-        curl \
+    git \
+    ca-certificates \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -177,19 +177,19 @@ COPY --from=uv-bin /uv /uvx /bin/
 # Create non-root user (or use existing user)
 RUN set -eux; \
     if getent group ${USER_GID} >/dev/null 2>&1; then \
-        echo "Group ${USER_GID} already exists"; \
+    echo "Group ${USER_GID} already exists"; \
     else \
-        groupadd -g ${USER_GID} ${USERNAME}; \
+    groupadd -g ${USER_GID} ${USERNAME}; \
     fi; \
     if id -u ${USER_UID} >/dev/null 2>&1; then \
-        echo "User ${USER_UID} already exists, using existing user"; \
-        EXISTING_USER=$(id -un ${USER_UID}); \
-        mkdir -p /app /home/${EXISTING_USER}/.cache; \
-        chown -R ${USER_UID}:${USER_GID} /app /home/${EXISTING_USER}/.cache; \
+    echo "User ${USER_UID} already exists, using existing user"; \
+    EXISTING_USER=$(id -un ${USER_UID}); \
+    mkdir -p /app /home/${EXISTING_USER}/.cache; \
+    chown -R ${USER_UID}:${USER_GID} /app /home/${EXISTING_USER}/.cache; \
     else \
-        useradd -m -u ${USER_UID} -g ${USER_GID} ${USERNAME}; \
-        mkdir -p /app /home/${USERNAME}/.cache; \
-        chown -R ${USERNAME}:${USERNAME} /app /home/${USERNAME}/.cache; \
+    useradd -m -u ${USER_UID} -g ${USER_GID} ${USERNAME}; \
+    mkdir -p /app /home/${USERNAME}/.cache; \
+    chown -R ${USERNAME}:${USERNAME} /app /home/${USERNAME}/.cache; \
     fi
 
 # Create references directory with proper permissions for the non-root user
@@ -352,19 +352,22 @@ RUN printf '%s\n' \
     'log "Starting Fish Speech API Server..."' \
     'validate_env' \
     '' \
-    'DEVICE_ARGS=$(build_device_args)' \
-    'COMPILE_ARGS=$(build_compile_args "$@")' \
+    'export FISH_SPEECH_LISTEN="${API_SERVER_NAME}:${API_SERVER_PORT}"' \
+    'export FISH_SPEECH_LLAMA_CHECKPOINT_PATH="${LLAMA_CHECKPOINT_PATH}"' \
+    'export FISH_SPEECH_DECODER_CHECKPOINT_PATH="${DECODER_CHECKPOINT_PATH}"' \
+    'export FISH_SPEECH_DECODER_CONFIG_NAME="${DECODER_CONFIG_NAME}"' \
     '' \
-    'log "Device args: ${DEVICE_ARGS:-none}"' \
-    'log "Compile args: ${COMPILE_ARGS}"' \
-    'log "Server: ${API_SERVER_NAME}:${API_SERVER_PORT}"' \
+    'if [ "${COMPILE:-}" = "1" ] || [ "${COMPILE:-}" = "true" ]; then' \
+    '    export FISH_SPEECH_COMPILE="true"' \
+    'fi' \
     '' \
-    'exec uv run tools/api_server.py \' \
-    '  --listen "${API_SERVER_NAME}:${API_SERVER_PORT}" \' \
-    '  --llama-checkpoint-path "${LLAMA_CHECKPOINT_PATH}" \' \
-    '  --decoder-checkpoint-path "${DECODER_CHECKPOINT_PATH}" \' \
-    '  --decoder-config-name "${DECODER_CONFIG_NAME}" \' \
-    '  ${DEVICE_ARGS} ${COMPILE_ARGS}' \
+    'if [ "${BACKEND:-}" = "cpu" ]; then' \
+    '    export FISH_SPEECH_DEVICE="cpu"' \
+    'else' \
+    '    export FISH_SPEECH_DEVICE="cuda"' \
+    'fi' \
+    '' \
+    'exec uv run python -m fish_speech.api.main' \
     > /app/start_server.sh && chmod +x /app/start_server.sh
 
 # Health check
@@ -382,10 +385,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update \
     && apt-get install -y --no-install-recommends \
-        vim \
-        htop \
-        strace \
-        gdb \
+    vim \
+    htop \
+    strace \
+    gdb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
