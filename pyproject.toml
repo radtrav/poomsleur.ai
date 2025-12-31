@@ -41,6 +41,9 @@ dependencies = [
   "cachetools",
   "descript-audio-codec",
   "descript-audiotools",
+  "fastapi>=0.116.1",
+  "python-multipart>=0.0.20",
+  "soundfile>=0.13.1",
 ]
 
 [project.optional-dependencies]
