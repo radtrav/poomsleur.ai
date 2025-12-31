@@ -1,7 +1,8 @@
 import traceback
 from http import HTTPStatus
 
-from kui.asgi import HTTPException, JSONResponse
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 
 
 class ExceptionHandler:
@@ -10,11 +11,11 @@ class ExceptionHandler:
         return JSONResponse(
             dict(
                 statusCode=exc.status_code,
-                message=exc.content,
+                message=exc.detail,
                 error=HTTPStatus(exc.status_code).phrase,
             ),
-            exc.status_code,
-            exc.headers,
+            status_code=exc.status_code,
+            headers=exc.headers,
         )
 
     async def other_exception_handler(self, exc: Exception):

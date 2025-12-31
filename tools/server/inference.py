@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 import numpy as np
-from kui.asgi import HTTPException
+from fastapi import HTTPException
 
 from fish_speech.inference_engine import TTSInferenceEngine
 from fish_speech.utils.schema import ServeTTSRequest
@@ -23,8 +23,8 @@ def inference_wrapper(req: ServeTTSRequest, engine: TTSInferenceEngine):
 
             case "error":
                 raise HTTPException(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    content=str(result.error),
+                    status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                    detail=str(result.error),
                 )
 
             case "segment":
@@ -40,6 +40,6 @@ def inference_wrapper(req: ServeTTSRequest, engine: TTSInferenceEngine):
 
     if count == 0:
         raise HTTPException(
-            HTTPStatus.INTERNAL_SERVER_ERROR,
-            content="No audio generated, please check the input text.",
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="No audio generated, please check the input text.",
         )

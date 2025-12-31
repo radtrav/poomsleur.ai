@@ -2,8 +2,8 @@ import argparse
 import base64
 import time
 import wave
+import json
 
-import ormsgpack
 import pyaudio
 import requests
 from pydub import AudioSegment
@@ -175,12 +175,11 @@ if __name__ == "__main__":
     start_time = time.time()
     response = requests.post(
         args.url,
-        params={"format": "msgpack"},
-        data=ormsgpack.packb(pydantic_data, option=ormsgpack.OPT_SERIALIZE_PYDANTIC),
+        json=pydantic_data.model_dump(mode="json"),
         stream=args.streaming,
         headers={
             "authorization": f"Bearer {args.api_key}",
-            "content-type": "application/msgpack",
+            "content-type": "application/json",
         },
     )
     end_time = time.time()
@@ -226,4 +225,7 @@ if __name__ == "__main__":
             print(f"Audio has been saved to '{audio_path}'.")
     else:
         print(f"Request failed with status code {response.status_code}")
-        print(response.json())
+        try:
+            print(response.json())
+        except:
+            print(response.content)
