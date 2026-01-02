@@ -4,7 +4,6 @@ import queue
 from dataclasses import dataclass
 from typing import Literal
 
-import torch
 from pydantic import BaseModel, Field, conint, model_validator
 from pydantic.functional_validators import SkipValidation
 from typing_extensions import Annotated

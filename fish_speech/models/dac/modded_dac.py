@@ -24,9 +24,8 @@ class VQResult:
     z: torch.Tensor
     codes: torch.Tensor
     latents: torch.Tensor
-    codebook_loss: torch.Tensor
-    commitment_loss: torch.Tensor
-    semantic_distill_z: torch.Tensor | None = None
+    codebook_loss: torch.Tensor | None = None
+    commitment_loss: torch.Tensor | None = None
 
 
 def find_multiple(n: int, k: int) -> int:

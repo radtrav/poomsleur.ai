@@ -196,9 +196,8 @@ class VQResult:
     z: torch.Tensor
     codes: torch.Tensor
     latents: torch.Tensor
-    codebook_loss: torch.Tensor
-    commitment_loss: torch.Tensor
-    semantic_distill_z: torch.Tensor | None = None
+    codebook_loss: torch.Tensor | None = None
+    commitment_loss: torch.Tensor | None = None
 
 
 class DownsampleResidualVectorQuantize(nn.Module):
@@ -214,14 +213,13 @@ class DownsampleResidualVectorQuantize(nn.Module):
         downsample_dims: tuple[int, ...] | None = None,
         pre_module: nn.Module | None = None,
         post_module: nn.Module | None = None,
-        semantic_predictor_module: nn.Module | None = None,
     ):
         super().__init__()
 
         if downsample_dims is None:
-            downsample_dims = [input_dim for _ in range(len(downsample_factor))]
+            downsample_dims = tuple(input_dim for _ in range(len(downsample_factor)))
 
-        all_dims = (input_dim,) + tuple(downsample_dims)
+        all_dims = (input_dim,) + downsample_dims
 
         self.semantic_quantizer = ResidualVectorQuantize(
             input_dim=input_dim,
@@ -279,48 +277,34 @@ class DownsampleResidualVectorQuantize(nn.Module):
             pre_module if pre_module is not None else nn.Identity()
         )  # leave for transformer, LSTM or Mamba or something else
         self.post_module = post_module if post_module is not None else nn.Identity()
-        self.semantic_predictor_module = (
-            semantic_predictor_module
-            if semantic_predictor_module is not None
-            else nn.Identity()
-        )
 
     def _init_weights(self, m):
         if isinstance(m, (nn.Conv1d, nn.Linear)):
             nn.init.trunc_normal_(m.weight, std=0.02)
             nn.init.constant_(m.bias, 0)
 
-    def forward(
-        self, z, n_quantizers: int = None, semantic_len: torch.Tensor = None, **kwargs
-    ):
+    def forward(self, z, n_quantizers: int | None = None, **kwargs):
         # z: (B, D, T)
         original_shape = z.shape
-        if semantic_len is None:
-            semantic_len = torch.LongTensor([z.shape[-1]])
         z = self.downsample(z)
         z = self.pre_module(z)  # B, T, D
         (
             semantic_z,
             semantic_codes,
             semantic_latents,
-            semantic_commitment_loss,
-            semantic_codebook_loss,
+            _,
+            _,
         ) = self.semantic_quantizer(z)
         residual_z = z - semantic_z
-        residual_z, codes, latents, commitment_loss, codebook_loss = self.quantizer(
+        residual_z, codes, latents, _, _ = self.quantizer(
             residual_z, n_quantizers=n_quantizers
         )
         z = semantic_z + residual_z
-        commitment_loss = commitment_loss + semantic_commitment_loss
-        codebook_loss = codebook_loss + semantic_codebook_loss
         codes = torch.cat([semantic_codes, codes], dim=1)
         latents = torch.cat([semantic_latents, latents], dim=1)
         z = self.post_module(z)
         z = self.upsample(z)
         # z: (B, D, T)
-
-        # semantic distillation (disabled here since only used in training)
-        # semantic_distill_z = self.semantic_predictor_module(semantic_z, semantic_len).mT  # wav2vec target is B, T, D
 
         # Pad or crop z to match original shape
         diff = original_shape[-1] - z.shape[-1]
@@ -336,8 +320,8 @@ class DownsampleResidualVectorQuantize(nn.Module):
             z=z,
             codes=codes,
             latents=latents,
-            commitment_loss=commitment_loss,
-            codebook_loss=codebook_loss,
+            commitment_loss=None,
+            codebook_loss=None,
         )
 
         return results
@@ -382,7 +366,7 @@ if __name__ == "__main__":
         codebook_dim=8,
         codebook_size=1024,
         quantizer_dropout=0.5,
-        downsample_factor=[2, 2],
+        downsample_factor=(2, 2),
     )
     rvq.eval()
     x = torch.randn(2, 512, 442)
