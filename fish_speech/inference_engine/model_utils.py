@@ -1,9 +1,7 @@
 import io
-import re
 
 import librosa
 import torch
-import torchaudio
 from cachetools import LRUCache, cached
 
 CACHE_MAXSIZE = 10000

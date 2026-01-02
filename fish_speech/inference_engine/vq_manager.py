@@ -9,7 +9,7 @@ from fish_speech.models.dac.modded_dac import DAC
 class VQManager:
 
     def __init__(self):
-        # Make Pylance happy (attribut/method not defined...)
+        # Make Pylance happy (attribute/method not defined...)
         self.decoder_model: DAC
         self.load_audio: Callable
 

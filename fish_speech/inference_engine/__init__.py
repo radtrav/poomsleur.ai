@@ -5,6 +5,7 @@ from typing import Generator
 import numpy as np
 import torch
 from loguru import logger
+from contextlib import nullcontext
 
 from fish_speech.inference_engine.reference_loader import ReferenceLoader
 from fish_speech.inference_engine.utils import InferenceResult, wav_chunk_header
@@ -15,9 +16,17 @@ from fish_speech.models.text2semantic.inference import (
     GenerateResponse,
     WrappedGenerateResponse,
 )
-from fish_speech.utils import autocast_exclude_mps, set_seed
+from fish_speech.utils import set_seed
 from fish_speech.utils.schema import ServeTTSRequest
 
+def autocast_exclude_mps(
+    device_type: str, dtype: torch.dtype
+) -> nullcontext | torch.autocast:
+    return (
+        nullcontext()
+        if torch.backends.mps.is_available()
+        else torch.autocast(device_type, dtype)
+    )
 
 class TTSInferenceEngine(ReferenceLoader, VQManager):
 
