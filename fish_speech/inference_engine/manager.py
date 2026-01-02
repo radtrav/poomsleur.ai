@@ -28,12 +28,15 @@ class ModelManager:
         self.precision = torch.half if half else torch.bfloat16
 
         # Check if MPS or CUDA is available
-        if torch.backends.mps.is_available():
+        if torch.cuda.is_available():
+            self.device = "cuda"
+            logger.info("CUDA is available, running on CUDA.")
+        elif torch.backends.mps.is_available():
             self.device = "mps"
-            logger.info("mps is available, running on mps.")
-        elif not torch.cuda.is_available():
+            logger.info("MPS is available, running on MPS.")
+        else:
             self.device = "cpu"
-            logger.info("CUDA is not available, running on CPU.")
+            logger.info("CUDA/MPS not available, running on CPU.")
 
         # Load the TTS models
         self.load_llama_model(
@@ -78,16 +81,19 @@ class ModelManager:
         logger.info("Decoder model loaded.")
 
     def warm_up(self, tts_inference_engine) -> None:
-        request = ServeTTSRequest(
-            text="Hello world.",
-            references=[],
-            reference_id=None,
-            max_new_tokens=1024,
-            chunk_length=200,
-            top_p=0.7,
-            repetition_penalty=1.2,
-            temperature=0.7,
-            format="wav",
-        )
-        list(inference(request, tts_inference_engine))
-        logger.info("Models warmed up.")
+        try:
+            request = ServeTTSRequest(
+                text="Hello world.",
+                references=[],
+                reference_id=None,
+                max_new_tokens=1024,
+                chunk_length=200,
+                top_p=0.7,
+                repetition_penalty=1.2,
+                temperature=0.7,
+                format="wav",
+            )
+            list(inference(request, tts_inference_engine))
+            logger.info("Models warmed up.")
+        except Exception as e:
+            logger.warning(f"Failed to warm up models: {e}")
