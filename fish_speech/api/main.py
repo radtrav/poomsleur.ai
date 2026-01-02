@@ -74,4 +74,5 @@ if __name__ == "__main__":
         port=int(port),
         workers=settings.workers,
         log_level="info",
+        reload=True
     )

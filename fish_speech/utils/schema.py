@@ -76,6 +76,9 @@ class ServeReferenceAudio(BaseModel):
     def __repr__(self) -> str:
         return f"ServeReferenceAudio(text={self.text!r}, audio_size={len(self.audio)})"
 
+class ServeTTSPairRequest(BaseModel):
+    text_lang1: str
+    text_lang2: str
 
 class ServeTTSRequest(BaseModel):
     text: str

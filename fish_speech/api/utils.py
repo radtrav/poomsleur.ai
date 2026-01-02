@@ -11,8 +11,9 @@ async def inference_async(req: ServeTTSRequest, engine):
         if isinstance(chunk, bytes):
             yield chunk
 
-async def buffer_to_async_generator(buffer):
-    yield buffer
+async def buffer_to_async_generator(*buffers):
+    for buffer in buffers:
+        yield buffer
 
 def get_content_type(audio_format):
     if audio_format == "wav":
