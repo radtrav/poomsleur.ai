@@ -1,5 +1,5 @@
 import io
-import soundfile as sf
+import soundfile as sf  # type: ignore
 from typing import Annotated
 from http import HTTPStatus
 from fastapi import APIRouter, Request, HTTPException, Depends
